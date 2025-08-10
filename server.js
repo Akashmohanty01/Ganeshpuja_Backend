@@ -1,4 +1,3 @@
-// server.js
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
@@ -8,17 +7,32 @@ dotenv.config();
 
 const app = express();
 
-// ✅ Allow only your Vercel frontend & local dev
+// Allowed origins
+const allowedOrigins = [
+  "https://janajagrutiyuvaparisad-ganeshpuja.vercel.app",
+  "http://localhost:5173", // local dev
+];
+
+// CORS middleware with dynamic origin check
 app.use(
   cors({
-    origin: [
-      "https://janajagrutiyuvaparisad-ganeshpuja.vercel.app",
-      "http://localhost:5173" // for local testing
-    ],
-    methods: ["GET", "POST"],
-    credentials: true
+    origin: function (origin, callback) {
+      // Allow requests with no origin like Postman or curl
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+    credentials: true,
   })
 );
+
+// Handle OPTIONS preflight requests for all routes
+app.options("*", cors());
 
 app.use(express.json());
 
@@ -26,7 +40,7 @@ app.use(express.json());
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
   })
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
@@ -37,7 +51,7 @@ const donationSchema = new mongoose.Schema({
   phone: String,
   purpose: String,
   message: String,
-  date: { type: Date, default: Date.now }
+  date: { type: Date, default: Date.now },
 });
 const Donation = mongoose.model("Donation", donationSchema);
 
@@ -46,7 +60,7 @@ const contactSchema = new mongoose.Schema({
   name: String,
   email: String,
   message: String,
-  date: { type: Date, default: Date.now }
+  date: { type: Date, default: Date.now },
 });
 const Contact = mongoose.model("Contact", contactSchema);
 
@@ -94,6 +108,7 @@ app.get("/contacts", async (req, res) => {
   }
 });
 
+// Root route for testing
 app.get("/", (req, res) => {
   res.send("✅ API is running");
 });
