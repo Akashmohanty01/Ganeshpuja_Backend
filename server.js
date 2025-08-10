@@ -7,16 +7,29 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// ✅ Allow only your Vercel frontend & local dev
+app.use(
+  cors({
+    origin: [
+      "https://janajagrutiyuvaparisad-ganeshpuja.vercel.app",
+      "http://localhost:5173" // for local testing
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
+  })
+);
+
 app.use(express.json());
 
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log("✅ MongoDB connected"))
-.catch(err => console.error("❌ MongoDB connection error:", err));
+// ===== MongoDB connection =====
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // ===== Donation Schema =====
 const donationSchema = new mongoose.Schema({
